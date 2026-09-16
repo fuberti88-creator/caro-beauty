@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>CARÔ BEAUTY</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+
+    <!-- =========================
+         TOPO
+    ========================== -->
+
+    <header class="topo">
+
+        <div class="logo-container">
+
+            <img
+                src="imagens/logo.png.jpg"
+                alt="CARÔ BEAUTY"
+            >
+
+        </div>
+
+
+        <button
+            class="botao-carrinho"
+            id="abrirCarrinho"
+        >
+
+            🛒
+
+            <span id="quantidadeCarrinho">
+                0
+            </span>
+
+        </button>
+
+    </header>
+
+
+
+    <main>
+
+
+        <!-- =========================
+             BANNER
+        ========================== -->
+
+        <section class="banner">
+
+            <div class="banner-texto">
+
+                <span>
+                    CARÔ BEAUTY
+                </span>
+
+                <h1>
+                    Sua beleza,<br>
+                    seu momento.
+                </h1>
+
+                <p>
+                    Encontre seus produtos favoritos.
+                </p>
+
+                <button
+                    class="botao-principal"
+                    id="verProdutos"
+                >
+                    VER PRODUTOS
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================
+             CATEGORIAS
+        ========================== -->
+
+        <section class="categorias">
+
+            <div class="titulo-secao">
+
+                <span>
+                    EXPLORE
+                </span>
+
+                <h2>
+                    Categorias
+                </h2>
+
+            </div>
+
+
+            <div class="lista-categorias">
+
+
+                <button
+                    class="categoria ativa"
+                    data-categoria="Todos"
+                >
+
+                    <div class="icone-categoria">
+                        ✨
+                    </div>
+
+                    <span>
+                        Todos
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="categoria"
+                    data-categoria="Maquiagem"
+                >
+
+                    <div class="icone-categoria">
+                        💄
+                    </div>
+
+                    <span>
+                        Maquiagem
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="categoria"
+                    data-categoria="Skincare"
+                >
+
+                    <div class="icone-categoria">
+                        ✨
+                    </div>
+
+                    <span>
+                        Skincare
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="categoria"
+                    data-categoria="Cabelos"
+                >
+
+                    <div class="icone-categoria">
+                        💇‍♀️
+                    </div>
+
+                    <span>
+                        Cabelos
+                    </span>
+
+                </button>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================
+             PRODUTOS
+        ========================== -->
+
+        <section
+            class="produtos"
+            id="produtos"
+        >
+
+
+            <div class="cabecalho-produtos">
+
+                <div class="titulo-secao">
+
+                    <span>
+                        CONFIRA
+                    </span>
+
+                    <h2>
+                        Nossos produtos
+                    </h2>
+
+                </div>
+
+
+                <!-- BUSCA -->
+
+                <div class="campo-busca">
+
+                    <span>
+                        🔎
+                    </span>
+
+                    <input
+                        type="text"
+                        id="campoBusca"
+                        placeholder="Buscar produto..."
+                    >
+
+                </div>
+
+            </div>
+
+
+
+            <!-- FILTRO ATUAL -->
+
+            <div
+                class="filtro-atual"
+                id="filtroAtual"
+            >
+                Todos os produtos
+            </div>
+
+
+
+            <!-- PRODUTOS -->
+
+            <div
+                class="grade-produtos"
+                id="gradeProdutos"
+            ></div>
+
+
+
+            <!-- SEM RESULTADOS -->
+
+            <div
+                id="semProdutos"
+                class="sem-produtos"
+                style="display: none;"
+            >
+
+                <span>
+                    ✨
+                </span>
+
+                <h3>
+                    Nenhum produto encontrado
+                </h3>
+
+                <p>
+                    Tente buscar outro produto.
+                </p>
+
+            </div>
+
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================
+         CARRINHO
+    ========================== -->
+
+    <div
+        class="carrinho"
+        id="carrinho"
+    >
+
+
+        <div class="carrinho-cabecalho">
+
+            <div>
+
+                <span>
+                    SEU PEDIDO
+                </span>
+
+                <h2>
+                    Meu carrinho
+                </h2>
+
+            </div>
+
+
+            <button
+                id="fecharCarrinho"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+
+        <!-- LISTA -->
+
+        <div
+            class="lista-carrinho"
+            id="listaCarrinho"
+        >
+
+            <div class="carrinho-vazio">
+
+                <span>
+                    🛍️
+                </span>
+
+                <p>
+                    Seu carrinho está vazio.
+                </p>
+
+                <button
+                    onclick="fecharCarrinhoFuncao()"
+                >
+                    Continuar comprando
+                </button>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- DADOS DO CLIENTE -->
+
+        <div class="dados-pedido">
+
+
+            <label>
+                Seu nome
+            </label>
+
+            <input
+                type="text"
+                id="nomeCliente"
+                placeholder="Digite seu nome"
+            >
+
+
+            <label>
+                Observação
+            </label>
+
+            <textarea
+                id="observacaoPedido"
+                placeholder="Ex: Quero retirar na loja..."
+            ></textarea>
+
+
+        </div>
+
+
+
+        <!-- RODAPÉ -->
+
+        <div class="rodape-carrinho">
+
+
+            <div class="total">
+
+                <span>
+                    Total
+                </span>
+
+                <strong
+                    id="totalCarrinho"
+                >
+                    R$ 0,00
+                </strong>
+
+            </div>
+
+
+            <button
+                class="botao-whatsapp"
+                onclick="enviarWhatsApp()"
+            >
+
+                💬 ENVIAR PEDIDO
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- FUNDO -->
+
+    <div
+        class="fundo-carrinho"
+        id="fundoCarrinho"
+    ></div>
+
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>

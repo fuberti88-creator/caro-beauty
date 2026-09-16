@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Administração | CARÔ BEAUTY</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body class="pagina-admin">
+
+
+    <!-- =========================
+         LOGIN
+    ========================== -->
+
+    <section id="telaLogin" class="tela-login">
+
+        <div class="login-caixa">
+
+            <img
+                src="imagens/logo.png"
+                alt="CARÔ BEAUTY"
+                class="logo-admin"
+            >
+
+            <span class="admin-subtitulo">
+                ÁREA ADMINISTRATIVA
+            </span>
+
+            <h1>
+                Acesso
+            </h1>
+
+            <p>
+                Digite sua senha para continuar.
+            </p>
+
+
+            <input
+                type="password"
+                id="senhaAdmin"
+                placeholder="Senha"
+            >
+
+
+            <button
+                class="botao-admin-principal"
+                onclick="entrarAdmin()"
+            >
+                ENTRAR
+            </button>
+
+
+            <p
+                id="erroLogin"
+                class="erro-login"
+            ></p>
+
+
+            <a
+                href="index.html"
+                class="voltar-catalogo"
+            >
+                ← Voltar para o catálogo
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         PAINEL ADMIN
+    ========================== -->
+
+    <section
+        id="painelAdmin"
+        class="painel-admin"
+        style="display: none;"
+    >
+
+
+        <!-- TOPO -->
+
+        <header class="topo-admin">
+
+            <div>
+
+                <span>
+                    CARÔ BEAUTY
+                </span>
+
+                <h1>
+                    Administração
+                </h1>
+
+            </div>
+
+
+            <button
+                onclick="sairAdmin()"
+                class="botao-sair"
+            >
+                SAIR
+            </button>
+
+        </header>
+
+
+
+        <!-- CONTEÚDO -->
+
+        <main class="conteudo-admin">
+
+
+            <!-- ADICIONAR -->
+
+            <div class="cabecalho-produtos-admin">
+
+                <div>
+
+                    <span>
+                        CATÁLOGO
+                    </span>
+
+                    <h2>
+                        Produtos
+                    </h2>
+
+                </div>
+
+
+                <button
+                    class="botao-novo-produto"
+                    onclick="abrirFormulario()"
+                >
+                    + NOVO PRODUTO
+                </button>
+
+            </div>
+
+
+
+            <!-- FORMULÁRIO -->
+
+            <div
+                id="formularioProduto"
+                class="formulario-produto"
+                style="display: none;"
+            >
+
+                <div class="titulo-formulario">
+
+                    <div>
+
+                        <span>
+                            CADASTRO
+                        </span>
+
+                        <h2 id="tituloFormulario">
+                            Novo produto
+                        </h2>
+
+                    </div>
+
+
+                    <button
+                        onclick="fecharFormulario()"
+                        class="fechar-formulario"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+
+                <form
+                    id="formProduto"
+                    onsubmit="salvarProduto(event)"
+                >
+
+
+                    <!-- FOTO -->
+
+                    <div class="campo">
+
+                        <label>
+                            Foto do produto
+                        </label>
+
+                        <input
+                            type="file"
+                            id="imagemProduto"
+                            accept="image/*"
+                        >
+
+                        <small>
+                            Escolha uma imagem do celular ou computador.
+                        </small>
+
+                    </div>
+
+
+
+                    <!-- NOME -->
+
+                    <div class="campo">
+
+                        <label>
+                            Nome do produto
+                        </label>
+
+                        <input
+                            type="text"
+                            id="nomeProduto"
+                            placeholder="Ex: Gloss Labial"
+                            required
+                        >
+
+                    </div>
+
+
+
+                    <!-- DESCRIÇÃO -->
+
+                    <div class="campo">
+
+                        <label>
+                            Descrição
+                        </label>
+
+                        <textarea
+                            id="descricaoProduto"
+                            placeholder="Descrição curta do produto"
+                        ></textarea>
+
+                    </div>
+
+
+
+                    <!-- PREÇO -->
+
+                    <div class="campo">
+
+                        <label>
+                            Preço
+                        </label>
+
+                        <input
+                            type="number"
+                            id="precoProduto"
+                            placeholder="29.90"
+                            step="0.01"
+                            min="0"
+                            required
+                        >
+
+                    </div>
+
+
+
+                    <!-- CATEGORIA -->
+
+                    <div class="campo">
+
+                        <label>
+                            Categoria
+                        </label>
+
+                        <select id="categoriaProduto">
+
+                            <option value="Maquiagem">
+                                Maquiagem
+                            </option>
+
+                            <option value="Skincare">
+                                Skincare
+                            </option>
+
+                            <option value="Cabelos">
+                                Cabelos
+                            </option>
+
+                            <option value="Perfumes">
+                                Perfumes
+                            </option>
+
+                            <option value="Outros">
+                                Outros
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+
+                    <!-- ESTOQUE -->
+
+                    <div class="campo">
+
+                        <label>
+                            Disponibilidade
+                        </label>
+
+                        <select id="estoqueProduto">
+
+                            <option value="true">
+                                🟢 Em estoque
+                            </option>
+
+                            <option value="false">
+                                🔴 Sem estoque
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+
+                    <button
+                        type="submit"
+                        class="botao-salvar-produto"
+                    >
+                        SALVAR PRODUTO
+                    </button>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- LISTA -->
+
+            <div
+                id="listaProdutosAdmin"
+                class="lista-produtos-admin"
+            ></div>
+
+
+        </main>
+
+    </section>
+
+
+    <script src="admin.js"></script>
+
+</body>
+
+</html>
