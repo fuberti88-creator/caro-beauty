@@ -4,11 +4,6 @@
    SUPABASE
 ========================================= */
 
-
-/* =========================================
-   CONFIGURAÇÃO
-========================================= */
-
 const SUPABASE_URL =
     "https://ehxqgrhpgizekwbqrdwp.supabase.co";
 
@@ -16,9 +11,9 @@ const SUPABASE_ANON_KEY =
     "sb_publishable_sYXKhTNj_j6sSGSZkwNkAg_i1P5UAGO";
 
 
-/*
-   SENHA DA ÁREA ADMINISTRATIVA
-*/
+/* =========================================
+   SENHA DO ADMIN
+========================================= */
 
 const SENHA_ADMIN = "caro123";
 
@@ -28,9 +23,7 @@ const SENHA_ADMIN = "caro123";
 ========================================= */
 
 let supabaseClient = null;
-
 let produtos = [];
-
 let produtoEditando = null;
 
 
@@ -38,36 +31,20 @@ let produtoEditando = null;
    INICIALIZAÇÃO
 ========================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async function () {
+document.addEventListener("DOMContentLoaded", async function () {
 
-        try {
+    try {
 
-            /*
-               Carrega o Supabase
-            */
+        await carregarSupabase();
+        await carregarProdutos();
 
-            await carregarSupabase();
+    } catch (erro) {
 
-            /*
-               Só mostra produtos depois
-               que o Supabase estiver pronto
-            */
-
-            await carregarProdutos();
-
-        } catch (erro) {
-
-            console.error(
-                "Erro ao iniciar:",
-                erro
-            );
-
-        }
+        console.error("Erro ao iniciar:", erro);
 
     }
-);
+
+});
 
 
 /* =========================================
@@ -76,13 +53,32 @@ document.addEventListener(
 
 function carregarSupabase() {
 
-    return new Promise(
-        (resolve, reject) => {
+    return new Promise((resolve, reject) => {
 
-            if (
-                typeof window.supabase !==
-                "undefined"
-            ) {
+        if (typeof window.supabase !== "undefined") {
+
+            supabaseClient =
+                window.supabase.createClient(
+                    SUPABASE_URL,
+                    SUPABASE_ANON_KEY
+                );
+
+            resolve();
+            return;
+        }
+
+
+        const script =
+            document.createElement("script");
+
+
+        script.src =
+            "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+
+
+        script.onload = function () {
+
+            try {
 
                 supabaseClient =
                     window.supabase.createClient(
@@ -92,56 +88,29 @@ function carregarSupabase() {
 
                 resolve();
 
-                return;
+            } catch (erro) {
+
+                reject(erro);
 
             }
 
-
-            const script =
-                document.createElement("script");
+        };
 
 
-            script.src =
-                "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+        script.onerror = function () {
+
+            reject(
+                new Error(
+                    "Não foi possível carregar o Supabase."
+                )
+            );
+
+        };
 
 
-            script.onload = function () {
+        document.head.appendChild(script);
 
-                try {
-
-                    supabaseClient =
-                        window.supabase.createClient(
-                            SUPABASE_URL,
-                            SUPABASE_ANON_KEY
-                        );
-
-                    resolve();
-
-                } catch (erro) {
-
-                    reject(erro);
-
-                }
-
-            };
-
-
-            script.onerror =
-                function () {
-
-                    reject(
-                        new Error(
-                            "Não foi possível carregar o Supabase."
-                        )
-                    );
-
-                };
-
-
-            document.head.appendChild(script);
-
-        }
-    );
+    });
 
 }
 
@@ -153,15 +122,11 @@ function carregarSupabase() {
 function entrarAdmin() {
 
     const senha =
-        document.getElementById(
-            "senhaAdmin"
-        ).value;
+        document.getElementById("senhaAdmin").value;
 
 
     const erro =
-        document.getElementById(
-            "erroLogin"
-        );
+        document.getElementById("erroLogin");
 
 
     if (senha === SENHA_ADMIN) {
@@ -179,10 +144,6 @@ function entrarAdmin() {
         erro.textContent = "";
 
 
-        /*
-           Atualiza os produtos ao entrar
-        */
-
         carregarProdutos();
 
     } else {
@@ -199,28 +160,23 @@ function entrarAdmin() {
    ENTER NO LOGIN
 ========================================= */
 
-document.addEventListener(
-    "keydown",
-    function (event) {
+document.addEventListener("keydown", function (event) {
 
-        const telaLogin =
-            document.getElementById(
-                "telaLogin"
-            );
+    const telaLogin =
+        document.getElementById("telaLogin");
 
 
-        if (
-            event.key === "Enter" &&
-            telaLogin &&
-            telaLogin.style.display !== "none"
-        ) {
+    if (
+        event.key === "Enter" &&
+        telaLogin &&
+        telaLogin.style.display !== "none"
+    ) {
 
-            entrarAdmin();
-
-        }
+        entrarAdmin();
 
     }
-);
+
+});
 
 
 /* =========================================
@@ -247,7 +203,7 @@ function sairAdmin() {
 
 
 /* =========================================
-   CARREGAR PRODUTOS DO SUPABASE
+   CARREGAR PRODUTOS
 ========================================= */
 
 async function carregarProdutos() {
@@ -255,7 +211,7 @@ async function carregarProdutos() {
     if (!supabaseClient) {
 
         console.error(
-            "Supabase ainda não foi carregado."
+            "Supabase não foi carregado."
         );
 
         return;
@@ -356,14 +312,9 @@ function abrirFormularioProduto() {
     produtoEditando = null;
 
 
-    const formulario =
-        document.getElementById(
-            "formularioProduto"
-        );
-
-
-    formulario.style.display =
-        "block";
+    document.getElementById(
+        "formularioProduto"
+    ).style.display = "block";
 
 
     document.getElementById(
@@ -376,10 +327,6 @@ function abrirFormularioProduto() {
         "formProduto"
     ).reset();
 
-
-    /*
-       Estoque ativado por padrão
-    */
 
     document.getElementById(
         "estoqueProduto"
@@ -402,8 +349,7 @@ function fecharFormularioProduto() {
 
     document.getElementById(
         "formularioProduto"
-    ).style.display =
-        "none";
+    ).style.display = "none";
 
 
     document.getElementById(
@@ -463,10 +409,6 @@ async function salvarProduto(event) {
         ).files[0];
 
 
-    /*
-       Validação
-    */
-
     if (!nome) {
 
         alert(
@@ -479,7 +421,7 @@ async function salvarProduto(event) {
 
 
     if (
-        !preco ||
+        isNaN(preco) ||
         preco < 0
     ) {
 
@@ -492,81 +434,53 @@ async function salvarProduto(event) {
     }
 
 
+    let imagem_url = "";
+
+
     /*
-       Mostra mensagem de salvamento
+       Mantém a imagem atual
+       quando estiver editando.
     */
 
-    const botao =
-        document.querySelector(
-            "#formProduto button[type='submit']"
-        );
+    if (produtoEditando) {
+
+        const produtoAtual =
+            produtos.find(
+                produto =>
+                    Number(produto.id) ===
+                    Number(produtoEditando)
+            );
 
 
-    const textoOriginal =
-        botao
-            ? botao.textContent
-            : "";
+        if (produtoAtual) {
+
+            imagem_url =
+                produtoAtual.imagem_url || "";
+
+        }
+
+    }
 
 
-    if (botao) {
+    /*
+       Nova imagem
+    */
 
-        botao.disabled = true;
+    if (arquivo) {
 
-        botao.textContent =
-            "SALVANDO...";
+        imagem_url =
+            await transformarImagem(
+                arquivo
+            );
 
     }
 
 
     try {
 
-        let imagem_url = "";
-
-
-        /*
-           Se estiver editando,
-           mantém a imagem atual
-        */
-
-        if (produtoEditando) {
-
-            const produtoAtual =
-                produtos.find(
-                    produto =>
-                        Number(produto.id) ===
-                        Number(produtoEditando)
-                );
-
-
-            if (produtoAtual) {
-
-                imagem_url =
-                    produtoAtual.imagem_url ||
-                    "";
-
-            }
-
-        }
-
-
-        /*
-           Se escolheu uma nova imagem,
-           transforma em Base64
-        */
-
-        if (arquivo) {
-
-            imagem_url =
-                await transformarImagem(
-                    arquivo
-                );
-
-        }
-
-
-        /*
+        /* =========================
            NOVO PRODUTO
-        */
+        ========================= */
 
         if (!produtoEditando) {
 
@@ -576,28 +490,20 @@ async function salvarProduto(event) {
                     .insert([
 
                         {
-                            nome:
-                                nome,
+                            nome: nome,
 
-                            descricao:
-                                descricao,
+                            descricao: descricao,
 
-                            preco:
-                                preco,
+                            preco: preco,
 
-                            categoria:
-                                categoria,
+                            categoria: categoria,
 
-                            imagem_url:
-                                imagem_url,
+                            imagem_url: imagem_url,
 
-                            estoque:
-                                estoque
-
+                            estoque: estoque
                         }
 
-                    ])
-                    .select();
+                    ]);
 
 
             if (resposta.error) {
@@ -606,12 +512,17 @@ async function salvarProduto(event) {
 
             }
 
+
+            alert(
+                "Produto cadastrado com sucesso!"
+            );
+
         }
 
 
-        /*
+        /* =========================
            EDITAR PRODUTO
-        */
+        ========================= */
 
         else {
 
@@ -620,23 +531,17 @@ async function salvarProduto(event) {
                     .from("produtos")
                     .update({
 
-                        nome:
-                            nome,
+                        nome: nome,
 
-                        descricao:
-                            descricao,
+                        descricao: descricao,
 
-                        preco:
-                            preco,
+                        preco: preco,
 
-                        categoria:
-                            categoria,
+                        categoria: categoria,
 
-                        imagem_url:
-                            imagem_url,
+                        imagem_url: imagem_url,
 
-                        estoque:
-                            estoque
+                        estoque: estoque
 
                     })
                     .eq(
@@ -651,54 +556,34 @@ async function salvarProduto(event) {
 
             }
 
+
+            alert(
+                "Produto atualizado com sucesso!"
+            );
+
         }
 
 
-        /*
-           Atualiza a lista
-        */
+        produtoEditando = null;
 
-        await carregarProdutos();
-
-
-        /*
-           Fecha formulário
-        */
 
         fecharFormularioProduto();
 
 
-        alert(
-            produtoEditando
-                ? "Produto atualizado com sucesso!"
-                : "Produto cadastrado com sucesso!"
-        );
+        await carregarProdutos();
 
 
     } catch (erro) {
 
         console.error(
-            "Erro ao salvar produto:",
+            "Erro ao salvar:",
             erro
         );
 
 
         alert(
-            "Não foi possível salvar o produto.\n\n" +
-            "Verifique o console do navegador para mais detalhes."
+            "Não foi possível salvar o produto."
         );
-
-
-    } finally {
-
-        if (botao) {
-
-            botao.disabled = false;
-
-            botao.textContent =
-                textoOriginal;
-
-        }
 
     }
 
@@ -711,41 +596,35 @@ async function salvarProduto(event) {
 
 function transformarImagem(arquivo) {
 
-    return new Promise(
-        (resolve, reject) => {
+    return new Promise((resolve, reject) => {
 
-            const leitor =
-                new FileReader();
-
-
-            leitor.onload =
-                function () {
-
-                    resolve(
-                        leitor.result
-                    );
-
-                };
+        const leitor =
+            new FileReader();
 
 
-            leitor.onerror =
-                function () {
+        leitor.onload = function () {
 
-                    reject(
-                        new Error(
-                            "Erro ao ler imagem."
-                        )
-                    );
-
-                };
-
-
-            leitor.readAsDataURL(
-                arquivo
+            resolve(
+                leitor.result
             );
 
-        }
-    );
+        };
+
+
+        leitor.onerror = function () {
+
+            reject(
+                new Error(
+                    "Erro ao ler imagem."
+                )
+            );
+
+        };
+
+
+        leitor.readAsDataURL(arquivo);
+
+    });
 
 }
 
@@ -789,171 +668,153 @@ function mostrarProdutos() {
     }
 
 
-    produtos.forEach(
-        produto => {
+    produtos.forEach(function (produto) {
 
-            const card =
-                document.createElement(
-                    "div"
-                );
+        const card =
+            document.createElement("div");
 
 
-            card.className =
-                "card-admin";
+        card.className =
+            "card-admin";
 
 
-            /*
-               IMAGEM
-            */
+        const imagem =
+            produto.imagem_url
 
-            const imagem =
-                produto.imagem_url
+                ? `
+                    <img
+                        src="${produto.imagem_url}"
+                        alt="${escaparHTML(produto.nome)}"
+                    >
+                  `
 
-                    ? `
-                        <img
-                            src="${produto.imagem_url}"
-                            alt="${escaparHTML(produto.nome)}"
-                        >
-                    `
-
-                    : `
-                        <div class="sem-imagem-admin">
-                            FOTO
-                        </div>
-                    `;
+                : `
+                    <div class="sem-imagem-admin">
+                        FOTO
+                    </div>
+                  `;
 
 
-            /*
-               ESTOQUE
-            */
-
-            const estoque =
-                produto.estoque === true;
+        const estoque =
+            produto.estoque === true;
 
 
-            const statusClasse =
-                estoque
-                    ? "estoque-ok"
-                    : "estoque-esgotado";
+        const statusClasse =
+            estoque
+                ? "estoque-ok"
+                : "estoque-esgotado";
 
 
-            const statusTexto =
-                estoque
-                    ? "EM ESTOQUE"
-                    : "SEM ESTOQUE";
+        const statusTexto =
+            estoque
+                ? "EM ESTOQUE"
+                : "SEM ESTOQUE";
 
 
-            card.innerHTML = `
+        card.innerHTML = `
 
-                <div class="foto-card-admin">
+            <div class="foto-card-admin">
 
-                    ${imagem}
+                ${imagem}
+
+            </div>
+
+
+            <div class="dados-card-admin">
+
+                <span class="categoria-admin">
+
+                    ${escaparHTML(
+                        produto.categoria || ""
+                    )}
+
+                </span>
+
+
+                <h3>
+
+                    ${escaparHTML(
+                        produto.nome || ""
+                    )}
+
+                </h3>
+
+
+                <p>
+
+                    ${escaparHTML(
+                        produto.descricao ||
+                        "Sem descrição"
+                    )}
+
+                </p>
+
+
+                <strong>
+
+                    R$ ${formatarPreco(
+                        produto.preco
+                    )}
+
+                </strong>
+
+
+                <div
+                    class="status-admin ${statusClasse}"
+                >
+
+                    ${statusTexto}
 
                 </div>
 
 
-                <div class="dados-card-admin">
+                <div class="acoes-admin">
 
-                    <span class="categoria-admin">
-
-                        ${escaparHTML(
-                            produto.categoria ||
-                            ""
-                        )}
-
-                    </span>
+                    <button
+                        onclick="editarProduto(${produto.id})"
+                        class="botao-editar"
+                    >
+                        EDITAR
+                    </button>
 
 
-                    <h3>
-
-                        ${escaparHTML(
-                            produto.nome ||
-                            ""
-                        )}
-
-                    </h3>
-
-
-                    <p>
-
-                        ${escaparHTML(
-                            produto.descricao ||
-                            "Sem descrição"
-                        )}
-
-                    </p>
-
-
-                    <strong>
-
-                        R$ ${formatarPreco(
-                            produto.preco
-                        )}
-
-                    </strong>
-
-
-                    <div
-                        class="status-admin ${statusClasse}"
+                    <button
+                        onclick="alternarEstoque(${produto.id})"
+                        class="botao-estoque"
                     >
 
-                        ${statusTexto}
+                        ${
+                            estoque
+                                ? "SEM ESTOQUE"
+                                : "ATIVAR ESTOQUE"
+                        }
 
-                    </div>
-
-
-                    <div class="acoes-admin">
-
-                        <button
-                            onclick="editarProduto(${produto.id})"
-                            class="botao-editar"
-                        >
-
-                            EDITAR
-
-                        </button>
+                    </button>
 
 
-                        <button
-                            onclick="alternarEstoque(${produto.id})"
-                            class="botao-estoque"
-                        >
-
-                            ${
-                                estoque
-                                    ? "SEM ESTOQUE"
-                                    : "ATIVAR ESTOQUE"
-                            }
-
-                        </button>
-
-
-                        <button
-                            onclick="excluirProduto(${produto.id})"
-                            class="botao-excluir"
-                        >
-
-                            EXCLUIR
-
-                        </button>
-
-                    </div>
+                    <button
+                        onclick="excluirProduto(${produto.id})"
+                        class="botao-excluir"
+                    >
+                        EXCLUIR
+                    </button>
 
                 </div>
 
-            `;
+            </div>
+
+        `;
 
 
-            lista.appendChild(card);
+        lista.appendChild(card);
 
-        }
-    );
+    });
 
 }
 
 
 /* =========================================
-   EDITAR PRODUTO
+   EDITAR
 ========================================= */
 
 function editarProduto(id) {
@@ -983,8 +844,7 @@ function editarProduto(id) {
 
     document.getElementById(
         "formularioProduto"
-    ).style.display =
-        "block";
+    ).style.display = "block";
 
 
     document.getElementById(
@@ -1023,13 +883,6 @@ function editarProduto(id) {
         produto.estoque
             ? "true"
             : "false";
-
-
-    /*
-       Não colocamos a imagem antiga
-       no input porque o navegador
-       não permite isso.
-    */
 
 
     document.getElementById(
@@ -1090,10 +943,6 @@ async function alternarEstoque(id) {
         }
 
 
-        /*
-           Atualiza localmente
-        */
-
         produto.estoque =
             novoEstoque;
 
@@ -1119,7 +968,7 @@ async function alternarEstoque(id) {
 
 
 /* =========================================
-   EXCLUIR PRODUTO
+   EXCLUIR
 ========================================= */
 
 async function excluirProduto(id) {
@@ -1163,10 +1012,6 @@ async function excluirProduto(id) {
         }
 
 
-        /*
-           Atualiza a lista
-        */
-
         produtos =
             produtos.filter(
                 item =>
@@ -1181,7 +1026,7 @@ async function excluirProduto(id) {
     } catch (erro) {
 
         console.error(
-            "Erro ao excluir produto:",
+            "Erro ao excluir:",
             erro
         );
 
@@ -1207,7 +1052,6 @@ function formatarPreco(valor) {
         "pt-BR",
         {
             minimumFractionDigits: 2,
-
             maximumFractionDigits: 2
         }
     );
@@ -1216,7 +1060,7 @@ function formatarPreco(valor) {
 
 
 /* =========================================
-   PROTEÇÃO DE TEXTO
+   SEGURANÇA DO TEXTO
 ========================================= */
 
 function escaparHTML(texto) {
@@ -1224,25 +1068,10 @@ function escaparHTML(texto) {
     return String(
         texto || ""
     )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 
 }
