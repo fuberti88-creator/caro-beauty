@@ -8,7 +8,7 @@ const SUPABASE_URL =
     "https://ehxqgrhpgizekwbqrdwp.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "COLE_AQUI_A_MESMA_CHAVE_PUBLICA_DO_SEU_SCRIPT.JS";
+    "sb_publishable_sYXKhTNj_j6sSGSZkwNkAg_i1P5UAGO";
 
 
 /* =========================================
