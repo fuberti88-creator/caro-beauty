@@ -164,7 +164,9 @@ function renderizarProdutos() {
 
 
         // ESTA CLASSE É A MESMA DO SEU CSS
-        card.className = "produto";
+        card.className = produto.estoque
+    ? "produto"
+    : "produto sem-estoque";
 
 
         const preco =
