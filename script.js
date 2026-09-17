@@ -182,17 +182,18 @@ function renderizarProdutos() {
         let imagemHTML = "";
 
 
-        if (produto.imagem) {
+       if (produto.imagem) {
 
-            imagemHTML = `
-                <img
-                    src="${produto.imagem}"
-                    alt="${produto.nome}"
-                    class="imagem-produto"
-                >
-            `;
+    imagemHTML = `
+        <div class="imagem-produto">
+            <img
+                src="${produto.imagem}"
+                alt="${produto.nome}"
+            >
+        </div>
+    `;
 
-        } else {
+       } else {
 
             imagemHTML = `
                 <div class="imagem-produto">
