@@ -1,6 +1,7 @@
 /* =========================================
    CARÔ BEAUTY
    ÁREA ADMINISTRATIVA
+   SUPABASE
 ========================================= */
 
 
@@ -8,27 +9,25 @@
    CONFIGURAÇÃO
 ========================================= */
 
+const SUPABASE_URL =
+    "https://ehxqgrhpgizekwbqrdwp.supabase.co";
+
+const SUPABASE_ANON_KEY =
+    "sb_publishable_sYXKhTNj_j6sSGSZkwNkAg_i1P5UAGO";
+
 
 /*
    SENHA DA ÁREA ADMINISTRATIVA
-
-   Você pode trocar "caro123"
-   pela senha que quiser.
 */
 
 const SENHA_ADMIN = "caro123";
 
 
-/*
-   NOME DO LOCALSTORAGE
-*/
-
-const CHAVE_PRODUTOS = "caroBeautyProdutos";
-
-
 /* =========================================
    VARIÁVEIS
 ========================================= */
+
+let supabaseClient = null;
 
 let produtos = [];
 
@@ -41,105 +40,107 @@ let produtoEditando = null;
 
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
+    async function () {
 
-        produtos = carregarProdutos();
+        try {
 
-        mostrarProdutos();
+            /*
+               Carrega o Supabase
+            */
+
+            await carregarSupabase();
+
+            /*
+               Só mostra produtos depois
+               que o Supabase estiver pronto
+            */
+
+            await carregarProdutos();
+
+        } catch (erro) {
+
+            console.error(
+                "Erro ao iniciar:",
+                erro
+            );
+
+        }
 
     }
 );
 
 
 /* =========================================
-   CARREGAR PRODUTOS
+   CARREGAR SUPABASE
 ========================================= */
 
-function carregarProdutos() {
+function carregarSupabase() {
 
-    const produtosSalvos =
-        localStorage.getItem(CHAVE_PRODUTOS);
+    return new Promise(
+        (resolve, reject) => {
+
+            if (
+                typeof window.supabase !==
+                "undefined"
+            ) {
+
+                supabaseClient =
+                    window.supabase.createClient(
+                        SUPABASE_URL,
+                        SUPABASE_ANON_KEY
+                    );
+
+                resolve();
+
+                return;
+
+            }
 
 
-    if (produtosSalvos) {
-
-        return JSON.parse(produtosSalvos);
-
-    }
+            const script =
+                document.createElement("script");
 
 
-    /*
-       Produtos iniciais
-    */
+            script.src =
+                "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
 
-    const produtosIniciais = [
 
-        {
-            id: 1,
-            nome: "Gloss Labial",
-            descricao:
-                "Brilho intenso e acabamento delicado.",
-            preco: 29.90,
-            categoria: "Maquiagem",
-            estoque: true,
-            imagem: ""
-        },
+            script.onload = function () {
 
-        {
-            id: 2,
-            nome: "Máscara de Cílios",
-            descricao:
-                "Volume e definição para os cílios.",
-            preco: 35.90,
-            categoria: "Maquiagem",
-            estoque: true,
-            imagem: ""
-        },
+                try {
 
-        {
-            id: 3,
-            nome: "Hidratante Facial",
-            descricao:
-                "Hidratação para uma pele macia.",
-            preco: 42.90,
-            categoria: "Skincare",
-            estoque: true,
-            imagem: ""
-        },
+                    supabaseClient =
+                        window.supabase.createClient(
+                            SUPABASE_URL,
+                            SUPABASE_ANON_KEY
+                        );
 
-        {
-            id: 4,
-            nome: "Leave-in Capilar",
-            descricao:
-                "Finalização e cuidado para os cabelos.",
-            preco: 38.90,
-            categoria: "Cabelos",
-            estoque: true,
-            imagem: ""
+                    resolve();
+
+                } catch (erro) {
+
+                    reject(erro);
+
+                }
+
+            };
+
+
+            script.onerror =
+                function () {
+
+                    reject(
+                        new Error(
+                            "Não foi possível carregar o Supabase."
+                        )
+                    );
+
+                };
+
+
+            document.head.appendChild(script);
+
         }
-
-    ];
-
-
-    localStorage.setItem(
-        CHAVE_PRODUTOS,
-        JSON.stringify(produtosIniciais)
-    );
-
-
-    return produtosIniciais;
-}
-
-
-/* =========================================
-   SALVAR PRODUTOS
-========================================= */
-
-function salvarProdutos() {
-
-    localStorage.setItem(
-        CHAVE_PRODUTOS,
-        JSON.stringify(produtos)
     );
 
 }
@@ -177,6 +178,13 @@ function entrarAdmin() {
 
         erro.textContent = "";
 
+
+        /*
+           Atualiza os produtos ao entrar
+        */
+
+        carregarProdutos();
+
     } else {
 
         erro.textContent =
@@ -195,10 +203,16 @@ document.addEventListener(
     "keydown",
     function (event) {
 
+        const telaLogin =
+            document.getElementById(
+                "telaLogin"
+            );
+
+
         if (
             event.key === "Enter" &&
-            document.getElementById("telaLogin")
-                .style.display !== "none"
+            telaLogin &&
+            telaLogin.style.display !== "none"
         ) {
 
             entrarAdmin();
@@ -233,17 +247,123 @@ function sairAdmin() {
 
 
 /* =========================================
+   CARREGAR PRODUTOS DO SUPABASE
+========================================= */
+
+async function carregarProdutos() {
+
+    if (!supabaseClient) {
+
+        console.error(
+            "Supabase ainda não foi carregado."
+        );
+
+        return;
+
+    }
+
+
+    const lista =
+        document.getElementById(
+            "listaProdutosAdmin"
+        );
+
+
+    if (lista) {
+
+        lista.innerHTML = `
+
+            <div class="nenhum-produto">
+
+                <span>⏳</span>
+
+                <p>
+                    Carregando produtos...
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    try {
+
+        const resposta =
+            await supabaseClient
+                .from("produtos")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
+
+
+        if (resposta.error) {
+
+            throw resposta.error;
+
+        }
+
+
+        produtos =
+            resposta.data || [];
+
+
+        mostrarProdutos();
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao carregar produtos:",
+            erro
+        );
+
+
+        if (lista) {
+
+            lista.innerHTML = `
+
+                <div class="nenhum-produto">
+
+                    <span>⚠️</span>
+
+                    <p>
+                        Erro ao carregar produtos.
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+
+/* =========================================
    ABRIR FORMULÁRIO
 ========================================= */
 
-function abrirFormulario() {
+function abrirFormularioProduto() {
 
     produtoEditando = null;
 
 
-    document.getElementById(
-        "formularioProduto"
-    ).style.display = "block";
+    const formulario =
+        document.getElementById(
+            "formularioProduto"
+        );
+
+
+    formulario.style.display =
+        "block";
 
 
     document.getElementById(
@@ -255,6 +375,15 @@ function abrirFormulario() {
     document.getElementById(
         "formProduto"
     ).reset();
+
+
+    /*
+       Estoque ativado por padrão
+    */
+
+    document.getElementById(
+        "estoqueProduto"
+    ).value = "true";
 
 
     window.scrollTo({
@@ -269,11 +398,17 @@ function abrirFormulario() {
    FECHAR FORMULÁRIO
 ========================================= */
 
-function fecharFormulario() {
+function fecharFormularioProduto() {
 
     document.getElementById(
         "formularioProduto"
-    ).style.display = "none";
+    ).style.display =
+        "none";
+
+
+    document.getElementById(
+        "formProduto"
+    ).reset();
 
 
     produtoEditando = null;
@@ -328,100 +463,244 @@ async function salvarProduto(event) {
         ).files[0];
 
 
-    let imagem = "";
+    /*
+       Validação
+    */
+
+    if (!nome) {
+
+        alert(
+            "Digite o nome do produto."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !preco ||
+        preco < 0
+    ) {
+
+        alert(
+            "Digite um preço válido."
+        );
+
+        return;
+
+    }
 
 
     /*
-       Se estiver editando e não escolher
-       outra foto, mantém a antiga.
+       Mostra mensagem de salvamento
     */
 
-    if (produtoEditando) {
-
-        const produtoAtual =
-            produtos.find(
-                produto =>
-                    produto.id === produtoEditando
-            );
+    const botao =
+        document.querySelector(
+            "#formProduto button[type='submit']"
+        );
 
 
-        if (produtoAtual) {
+    const textoOriginal =
+        botao
+            ? botao.textContent
+            : "";
 
-            imagem =
-                produtoAtual.imagem || "";
+
+    if (botao) {
+
+        botao.disabled = true;
+
+        botao.textContent =
+            "SALVANDO...";
+
+    }
+
+
+    try {
+
+        let imagem_url = "";
+
+
+        /*
+           Se estiver editando,
+           mantém a imagem atual
+        */
+
+        if (produtoEditando) {
+
+            const produtoAtual =
+                produtos.find(
+                    produto =>
+                        Number(produto.id) ===
+                        Number(produtoEditando)
+                );
+
+
+            if (produtoAtual) {
+
+                imagem_url =
+                    produtoAtual.imagem_url ||
+                    "";
+
+            }
+
+        }
+
+
+        /*
+           Se escolheu uma nova imagem,
+           transforma em Base64
+        */
+
+        if (arquivo) {
+
+            imagem_url =
+                await transformarImagem(
+                    arquivo
+                );
+
+        }
+
+
+        /*
+           NOVO PRODUTO
+        */
+
+        if (!produtoEditando) {
+
+            const resposta =
+                await supabaseClient
+                    .from("produtos")
+                    .insert([
+
+                        {
+                            nome:
+                                nome,
+
+                            descricao:
+                                descricao,
+
+                            preco:
+                                preco,
+
+                            categoria:
+                                categoria,
+
+                            imagem_url:
+                                imagem_url,
+
+                            estoque:
+                                estoque
+
+                        }
+
+                    ])
+                    .select();
+
+
+            if (resposta.error) {
+
+                throw resposta.error;
+
+            }
+
+        }
+
+
+        /*
+           EDITAR PRODUTO
+        */
+
+        else {
+
+            const resposta =
+                await supabaseClient
+                    .from("produtos")
+                    .update({
+
+                        nome:
+                            nome,
+
+                        descricao:
+                            descricao,
+
+                        preco:
+                            preco,
+
+                        categoria:
+                            categoria,
+
+                        imagem_url:
+                            imagem_url,
+
+                        estoque:
+                            estoque
+
+                    })
+                    .eq(
+                        "id",
+                        produtoEditando
+                    );
+
+
+            if (resposta.error) {
+
+                throw resposta.error;
+
+            }
+
+        }
+
+
+        /*
+           Atualiza a lista
+        */
+
+        await carregarProdutos();
+
+
+        /*
+           Fecha formulário
+        */
+
+        fecharFormularioProduto();
+
+
+        alert(
+            produtoEditando
+                ? "Produto atualizado com sucesso!"
+                : "Produto cadastrado com sucesso!"
+        );
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao salvar produto:",
+            erro
+        );
+
+
+        alert(
+            "Não foi possível salvar o produto.\n\n" +
+            "Verifique o console do navegador para mais detalhes."
+        );
+
+
+    } finally {
+
+        if (botao) {
+
+            botao.disabled = false;
+
+            botao.textContent =
+                textoOriginal;
 
         }
 
     }
-
-
-    /*
-       Se escolheu uma nova imagem,
-       transforma em base64.
-    */
-
-    if (arquivo) {
-
-        imagem =
-            await transformarImagem(arquivo);
-
-    }
-
-
-    const novoProduto = {
-
-        id:
-            produtoEditando ||
-            Date.now(),
-
-        nome: nome,
-
-        descricao: descricao,
-
-        preco: preco,
-
-        categoria: categoria,
-
-        estoque: estoque,
-
-        imagem: imagem
-
-    };
-
-
-    /*
-       EDITAR
-    */
-
-    if (produtoEditando) {
-
-        produtos =
-            produtos.map(
-                produto =>
-                    produto.id === produtoEditando
-                        ? novoProduto
-                        : produto
-            );
-
-    }
-
-
-    /*
-       NOVO
-    */
-
-    else {
-
-        produtos.push(novoProduto);
-
-    }
-
-
-    salvarProdutos();
-
-    mostrarProdutos();
-
-    fecharFormulario();
 
 }
 
@@ -439,19 +718,31 @@ function transformarImagem(arquivo) {
                 new FileReader();
 
 
-            leitor.onload = function () {
+            leitor.onload =
+                function () {
 
-                resolve(
-                    leitor.result
-                );
+                    resolve(
+                        leitor.result
+                    );
 
-            };
-
-
-            leitor.onerror = reject;
+                };
 
 
-            leitor.readAsDataURL(arquivo);
+            leitor.onerror =
+                function () {
+
+                    reject(
+                        new Error(
+                            "Erro ao ler imagem."
+                        )
+                    );
+
+                };
+
+
+            leitor.readAsDataURL(
+                arquivo
+            );
 
         }
     );
@@ -469,6 +760,9 @@ function mostrarProdutos() {
         document.getElementById(
             "listaProdutosAdmin"
         );
+
+
+    if (!lista) return;
 
 
     lista.innerHTML = "";
@@ -508,24 +802,43 @@ function mostrarProdutos() {
                 "card-admin";
 
 
+            /*
+               IMAGEM
+            */
+
             const imagem =
-                produto.imagem
+                produto.imagem_url
 
-                    ? `<img src="${produto.imagem}" alt="${produto.nome}">`
+                    ? `
+                        <img
+                            src="${produto.imagem_url}"
+                            alt="${escaparHTML(produto.nome)}"
+                        >
+                    `
 
-                    : `<div class="sem-imagem-admin">
+                    : `
+                        <div class="sem-imagem-admin">
                             FOTO
-                       </div>`;
+                        </div>
+                    `;
+
+
+            /*
+               ESTOQUE
+            */
+
+            const estoque =
+                produto.estoque === true;
 
 
             const statusClasse =
-                produto.estoque
+                estoque
                     ? "estoque-ok"
                     : "estoque-esgotado";
 
 
             const statusTexto =
-                produto.estoque
+                estoque
                     ? "EM ESTOQUE"
                     : "SEM ESTOQUE";
 
@@ -542,27 +855,50 @@ function mostrarProdutos() {
                 <div class="dados-card-admin">
 
                     <span class="categoria-admin">
-                        ${produto.categoria}
+
+                        ${escaparHTML(
+                            produto.categoria ||
+                            ""
+                        )}
+
                     </span>
 
 
                     <h3>
-                        ${produto.nome}
+
+                        ${escaparHTML(
+                            produto.nome ||
+                            ""
+                        )}
+
                     </h3>
 
 
                     <p>
-                        ${produto.descricao || "Sem descrição"}
+
+                        ${escaparHTML(
+                            produto.descricao ||
+                            "Sem descrição"
+                        )}
+
                     </p>
 
 
                     <strong>
-                        R$ ${formatarPreco(produto.preco)}
+
+                        R$ ${formatarPreco(
+                            produto.preco
+                        )}
+
                     </strong>
 
 
-                    <div class="status-admin ${statusClasse}">
+                    <div
+                        class="status-admin ${statusClasse}"
+                    >
+
                         ${statusTexto}
+
                     </div>
 
 
@@ -572,7 +908,9 @@ function mostrarProdutos() {
                             onclick="editarProduto(${produto.id})"
                             class="botao-editar"
                         >
+
                             EDITAR
+
                         </button>
 
 
@@ -580,9 +918,13 @@ function mostrarProdutos() {
                             onclick="alternarEstoque(${produto.id})"
                             class="botao-estoque"
                         >
-                            ${produto.estoque
-                                ? "SEM ESTOQUE"
-                                : "ATIVAR ESTOQUE"}
+
+                            ${
+                                estoque
+                                    ? "SEM ESTOQUE"
+                                    : "ATIVAR ESTOQUE"
+                            }
+
                         </button>
 
 
@@ -590,7 +932,9 @@ function mostrarProdutos() {
                             onclick="excluirProduto(${produto.id})"
                             class="botao-excluir"
                         >
+
                             EXCLUIR
+
                         </button>
 
                     </div>
@@ -609,26 +953,38 @@ function mostrarProdutos() {
 
 
 /* =========================================
-   EDITAR
+   EDITAR PRODUTO
 ========================================= */
 
 function editarProduto(id) {
 
     const produto =
         produtos.find(
-            item => item.id === id
+            item =>
+                Number(item.id) ===
+                Number(id)
         );
 
 
-    if (!produto) return;
+    if (!produto) {
+
+        alert(
+            "Produto não encontrado."
+        );
+
+        return;
+
+    }
 
 
-    produtoEditando = id;
+    produtoEditando =
+        produto.id;
 
 
     document.getElementById(
         "formularioProduto"
-    ).style.display = "block";
+    ).style.display =
+        "block";
 
 
     document.getElementById(
@@ -640,25 +996,25 @@ function editarProduto(id) {
     document.getElementById(
         "nomeProduto"
     ).value =
-        produto.nome;
+        produto.nome || "";
 
 
     document.getElementById(
         "descricaoProduto"
     ).value =
-        produto.descricao;
+        produto.descricao || "";
 
 
     document.getElementById(
         "precoProduto"
     ).value =
-        produto.preco;
+        produto.preco || "";
 
 
     document.getElementById(
         "categoriaProduto"
     ).value =
-        produto.categoria;
+        produto.categoria || "";
 
 
     document.getElementById(
@@ -667,6 +1023,18 @@ function editarProduto(id) {
         produto.estoque
             ? "true"
             : "false";
+
+
+    /*
+       Não colocamos a imagem antiga
+       no input porque o navegador
+       não permite isso.
+    */
+
+
+    document.getElementById(
+        "imagemProduto"
+    ).value = "";
 
 
     window.scrollTo({
@@ -678,51 +1046,89 @@ function editarProduto(id) {
 
 
 /* =========================================
-   ESTOQUE
+   ALTERAR ESTOQUE
 ========================================= */
 
-function alternarEstoque(id) {
+async function alternarEstoque(id) {
 
-    produtos =
-        produtos.map(
-            produto => {
-
-                if (produto.id === id) {
-
-                    return {
-
-                        ...produto,
-
-                        estoque:
-                            !produto.estoque
-
-                    };
-
-                }
-
-
-                return produto;
-
-            }
+    const produto =
+        produtos.find(
+            item =>
+                Number(item.id) ===
+                Number(id)
         );
 
 
-    salvarProdutos();
+    if (!produto) return;
 
-    mostrarProdutos();
+
+    const novoEstoque =
+        !produto.estoque;
+
+
+    try {
+
+        const resposta =
+            await supabaseClient
+                .from("produtos")
+                .update({
+
+                    estoque:
+                        novoEstoque
+
+                })
+                .eq(
+                    "id",
+                    id
+                );
+
+
+        if (resposta.error) {
+
+            throw resposta.error;
+
+        }
+
+
+        /*
+           Atualiza localmente
+        */
+
+        produto.estoque =
+            novoEstoque;
+
+
+        mostrarProdutos();
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao alterar estoque:",
+            erro
+        );
+
+
+        alert(
+            "Não foi possível alterar o estoque."
+        );
+
+    }
 
 }
 
 
 /* =========================================
-   EXCLUIR
+   EXCLUIR PRODUTO
 ========================================= */
 
-function excluirProduto(id) {
+async function excluirProduto(id) {
 
     const produto =
         produtos.find(
-            item => item.id === id
+            item =>
+                Number(item.id) ===
+                Number(id)
         );
 
 
@@ -738,15 +1144,53 @@ function excluirProduto(id) {
     if (!confirmar) return;
 
 
-    produtos =
-        produtos.filter(
-            item => item.id !== id
+    try {
+
+        const resposta =
+            await supabaseClient
+                .from("produtos")
+                .delete()
+                .eq(
+                    "id",
+                    id
+                );
+
+
+        if (resposta.error) {
+
+            throw resposta.error;
+
+        }
+
+
+        /*
+           Atualiza a lista
+        */
+
+        produtos =
+            produtos.filter(
+                item =>
+                    Number(item.id) !==
+                    Number(id)
+            );
+
+
+        mostrarProdutos();
+
+
+    } catch (erro) {
+
+        console.error(
+            "Erro ao excluir produto:",
+            erro
         );
 
 
-    salvarProdutos();
+        alert(
+            "Não foi possível excluir o produto."
+        );
 
-    mostrarProdutos();
+    }
 
 }
 
@@ -757,12 +1201,48 @@ function excluirProduto(id) {
 
 function formatarPreco(valor) {
 
-    return Number(valor).toLocaleString(
+    return Number(
+        valor || 0
+    ).toLocaleString(
         "pt-BR",
         {
             minimumFractionDigits: 2,
+
             maximumFractionDigits: 2
         }
     );
+
+}
+
+
+/* =========================================
+   PROTEÇÃO DE TEXTO
+========================================= */
+
+function escaparHTML(texto) {
+
+    return String(
+        texto || ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
